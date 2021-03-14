@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from os import listdir
 from scipy.interpolate import griddata
 
+
 # generates rotated meshes
 def generate_angles(mesh):
     for theta in [-1, -0.5, -1 / 6, -1 / 12, 1 / 12]:
@@ -25,7 +26,7 @@ def Fdrag(vx, vy, vz):
 # fuction to stop simulation when disk is at y = 0
 def fallEarth(t, nezVec):
     x, y, z, vx, vy, vz, om1, om2, om3, dom1, dom2, dom3 = nezVec
-    return y
+    return z
 
 
 # returns angle between two vectors
@@ -47,10 +48,11 @@ def get_forces(vx, vy, vz, phi, theta, om3):
     return get_model(omega, angle, dir)
 
 
-#takes values from CFD model
+# takes values from CFD model
 def get_model(omega, angle, velocity):
-    F = Fdrag(velocity[0], velocity[1], velocity[2])
-    M = np.array([0, 0, 0])
+    U = np.linalg.norm(velocity)
+    F = np.array([griddata(points, f, [U, omega, angle]) for f in data_F])
+    M = np.array([griddata(points, m, [U, omega, angle]) for m in data_M])
     return F, M
 
 
@@ -97,12 +99,15 @@ Iz = inertia[2, 2]
 # load data
 CFD_data = dict()
 for file in listdir("forcesDir"):
-    CFD_data[file.split('.')[0]] = np.load("forcesDir/"+file)
+    CFD_data[file.split('.')[0]] = np.load("forcesDir/" + file)
 
+points = np.array([[U, omg, al] for U in CFD_data["U"] for omg in CFD_data["omg"] for al in CFD_data["al"]])
+data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
+data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
 
 # initial conditions
 x, y, z = 0, 0, 0  # m  -- positions
-vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0,v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
+vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
 om1, om2, om3 = 0, 0, init_rotation
 phi, theta, psi = 0, angl * np.pi / 180, 0
 init_cond = x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3
@@ -112,5 +117,5 @@ fallEarth.direction = -1
 fallEarth.terminal = True
 solution = solve_ivp(model, t, init_cond, events=fallEarth, method='BDF')
 plt.plot(solution.y[0, :], solution.y[2, :])
-plt.plot(solution.y[0, :], solution.y[7,:])
+plt.plot(solution.y[0, :], solution.y[7, :])
 plt.show()
