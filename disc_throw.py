@@ -25,7 +25,7 @@ def Fdrag(vx, vy, vz):
 # fuction to stop simulation when disk is at y = 0
 def fallEarth(t, nezVec):
     x, y, z, vx, vy, vz, om1, om2, om3, dom1, dom2, dom3 = nezVec
-    return y
+    return z
 
 
 # returns angle between two vectors
