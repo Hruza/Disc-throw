@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from os import listdir
 from scipy.interpolate import griddata
 
-
 g = 9.81
 
 
@@ -29,7 +28,7 @@ def Fdrag(vx, vy, vz):
 # fuction to stop simulation when disk is at y = 0
 def fallEarth(t, nezVec):
     x, y, z, vx, vy, vz, om1, om2, om3, dom1, dom2, dom3 = nezVec
-    return z
+    return min(z,1-t)
 
 
 # returns angle between two vectors
@@ -43,12 +42,19 @@ def angle_between(v1, v2):
 def get_forces(vx, vy, vz, phi, theta, om3, points, data_F, data_M):
     omega = om3
     dir = np.array([vx, vy, vz])
-    conversion_matrix = np.array([[cos(phi), sin(phi), 0],
-                                  [-sin(phi) * cos(theta), cos(phi) * cos(theta), sin(theta)],
-                                  [sin(phi) * sin(theta), -sin(theta) * cos(phi), cos(theta)]])
+    conversion_matrix = np.array([[ cos(phi) * cos(theta),-sin(phi) * cos(theta), sin(theta)],
+                                    [ sin(phi)   ,           cos(phi)              , 0],
+                                  [-sin(theta) * cos(phi),sin(phi) * sin(theta),  cos(theta)]])
     normal = np.matmul(conversion_matrix, np.array([0, 0, 1]))
+    normal /= np.linalg.norm(normal)
     angle = angle_between(dir, normal) - (np.pi / 2)
-    return get_model(omega, angle, dir, points, data_F, data_M)
+    F, M = get_model(omega, angle, dir, points, data_F, data_M)
+    M[0] *= -1
+    localX = (dir / np.linalg.norm(dir))
+    localY = np.cross(dir, normal)
+    localZ = np.cross(localY, dir)
+    F = -F[0] * localX + F[1] * localY + F[2] * localZ
+    return F, M
 
 
 # takes values from CFD model
@@ -128,5 +134,5 @@ init_rotation = 10;
 solution = compute(v0, angl, init_rotation)
 
 plt.plot(solution.y[0, :], solution.y[2, :])
-plt.plot(solution.y[0, :], solution.y[1, :])
+#plt.plot(solution.y[0, :], solution.y[1, :])
 plt.show()
