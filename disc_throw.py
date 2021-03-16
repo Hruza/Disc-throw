@@ -7,6 +7,9 @@ from os import listdir
 from scipy.interpolate import griddata
 
 
+g = 9.81
+
+
 # generates rotated meshes
 def generate_angles(mesh):
     for theta in [-1, -0.5, -1 / 6, -1 / 12, 1 / 12]:
@@ -37,7 +40,7 @@ def angle_between(v1, v2):
 
 
 # translate ODE parameters to CFD parameters
-def get_forces(vx, vy, vz, phi, theta, om3):
+def get_forces(vx, vy, vz, phi, theta, om3, points, data_F, data_M):
     omega = om3
     dir = np.array([vx, vy, vz])
     conversion_matrix = np.array([[cos(phi), sin(phi), 0],
@@ -45,23 +48,23 @@ def get_forces(vx, vy, vz, phi, theta, om3):
                                   [sin(phi) * sin(theta), -sin(theta) * cos(phi), cos(theta)]])
     normal = np.matmul(conversion_matrix, np.array([0, 0, 1]))
     angle = angle_between(dir, normal) - (np.pi / 2)
-    return get_model(omega, angle, dir)
+    return get_model(omega, angle, dir, points, data_F, data_M)
 
 
 # takes values from CFD model
-def get_model(omega, angle, velocity):
+def get_model(omega, angle, velocity, points, data_F, data_M):
     U = np.linalg.norm(velocity)
     F = np.array([griddata(points, f, [U, omega, angle]) for f in data_F])
     M = np.array([griddata(points, m, [U, omega, angle]) for m in data_M])
     return F, M
 
 
-def model(t, nezVec):
+def model(t, nezVec, m, Ixy, Iz, points, data_F, data_M):
     # unpack unknowns
     x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3 = nezVec
 
     # calculate forces and acceleration
-    F, M = get_forces(vx, vy, vz, phi, theta, om3)
+    F, M = get_forces(vx, vy, vz, phi, theta, om3, points, data_F, data_M)
     a = F / m
 
     # RHS of eq.
@@ -84,38 +87,46 @@ def model(t, nezVec):
     return dxdt, dydt, dzdt, dvxdt, dvydt, dvzdt, dphi, dtheta, dpsi, dom1, dom2, dom3
 
 
+def compute(v0, angle, init_rotation):
+    # getting information from stl file
+    disc = mesh.Mesh.from_file('jade.stl')
+    volume, m, cog, inertia = disc.get_mass_properties_with_density(1250)
+    Ixy = inertia[0, 0]
+    Iz = inertia[2, 2]
+
+    # load data
+    CFD_data = dict()
+    for file in listdir("forcesDir"):
+        CFD_data[file.split('.')[0]] = np.load("forcesDir/" + file)
+
+    points = np.array([[U, omg, al] for U in CFD_data["U"] for omg in CFD_data["omg"] for al in CFD_data["al"]])
+    data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
+    data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
+
+    # initial conditions
+    x, y, z = 0, 0, 0  # m  -- positions
+    vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
+    om1, om2, om3 = 0, 0, init_rotation
+    phi, theta, psi = 0, angle * np.pi / 180, 0
+    init_cond = x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3
+
+    t = np.linspace(0, 1000, 2)  # s -- time
+    fallEarth.direction = -1
+    fallEarth.terminal = True
+
+    odr_model = lambda t, nezVec: model(t, nezVec, m, Ixy, Iz, points, data_F, data_M)
+
+    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='BDF')
+    return solution
+
+
 # parameters
 v0 = 10  # initial velocity
 angl = 15  # angle of throw
 init_rotation = 10;
-g = 9.81
 
-# getting information from stl file
-disc = mesh.Mesh.from_file('jade.stl')
-volume, m, cog, inertia = disc.get_mass_properties_with_density(1250)
-Ixy = inertia[0, 0]
-Iz = inertia[2, 2]
+solution = compute(v0, angl, init_rotation)
 
-# load data
-CFD_data = dict()
-for file in listdir("forcesDir"):
-    CFD_data[file.split('.')[0]] = np.load("forcesDir/" + file)
-
-points = np.array([[U, omg, al] for U in CFD_data["U"] for omg in CFD_data["omg"] for al in CFD_data["al"]])
-data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
-data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
-
-# initial conditions
-x, y, z = 0, 0, 0  # m  -- positions
-vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
-om1, om2, om3 = 0, 0, init_rotation
-phi, theta, psi = 0, angl * np.pi / 180, 0
-init_cond = x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3
-
-t = np.linspace(0, 1000, 2)  # s -- time
-fallEarth.direction = -1
-fallEarth.terminal = True
-solution = solve_ivp(model, t, init_cond, events=fallEarth, method='BDF')
 plt.plot(solution.y[0, :], solution.y[2, :])
-plt.plot(solution.y[0, :], solution.y[7, :])
+plt.plot(solution.y[0, :], solution.y[1, :])
 plt.show()
