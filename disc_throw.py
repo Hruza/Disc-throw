@@ -5,6 +5,7 @@ from numpy import cos, sin
 import matplotlib.pyplot as plt
 from os import listdir
 from scipy.interpolate import griddata
+from scipy.spatial.transform import Rotation as rot
 
 g = 9.81
 
@@ -42,18 +43,18 @@ def angle_between(v1, v2):
 def get_forces(vx, vy, vz, phi, theta, om3, points, data_F, data_M):
     omega = om3
     dir = np.array([vx, vy, vz])
-    conversion_matrix = np.array([[ cos(phi) * cos(theta),-sin(phi) * cos(theta), sin(theta)],
-                                    [ sin(phi)   ,           cos(phi)              , 0],
-                                  [-sin(theta) * cos(phi),sin(phi) * sin(theta),  cos(theta)]])
-    normal = np.matmul(conversion_matrix, np.array([0, 0, 1]))
-    normal /= np.linalg.norm(normal)
+
+    rotation = rot.from_rotvec(np.array([0,0,1])*phi)
+    rotation = rot.from_rotvec(rotation.apply([1,0,0])*theta)
+    normal = rotation.apply(np.array([0, 0, 1]))
+
     angle = angle_between(dir, normal) - (np.pi / 2)
     F, M = get_model(omega, angle, dir, points, data_F, data_M)
     M[0] *= -1
     localX = (dir / np.linalg.norm(dir))
-    localY = np.cross(dir, normal)
-    localZ = np.cross(localY, dir)
-    F = -F[0] * localX + F[1] * localY + F[2] * localZ
+    localY = np.cross( normal,localX)
+    localZ = np.cross( localX,localY)
+    F = -(F[0] * localX) + (F[1] * localY) + (F[2] * localZ)
     return F, M
 
 
@@ -113,7 +114,7 @@ def compute(v0, angle, init_rotation):
     x, y, z = 0, 0, 0  # m  -- positions
     vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
     om1, om2, om3 = 0, 0, init_rotation
-    phi, theta, psi = 0, angle * np.pi / 180, 0
+    phi, theta, psi = -np.pi/2, angle * np.pi / 180, 0
     init_cond = x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3
 
     t = np.linspace(0, 1000, 2)  # s -- time
