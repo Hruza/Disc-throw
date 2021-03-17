@@ -16,7 +16,7 @@ def rotate_euler(obj, fi,theta, psi):
     obj.rotation_euler.rotate_axis("Y",-theta)
     obj.rotation_euler.rotate_axis("Z",-psi)
 
-v0 = 15  # initial velocity
+v0 = 10  # initial velocity
 angl = 15  # angle of throw
 init_rotation = 10;
 
