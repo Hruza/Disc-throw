@@ -102,9 +102,12 @@ def model(t, nezVec, m, Ixy, Iz, points, data_F, data_M):
     dom3 = M[2] / Iz
 
     # change of rotation
-    dphi = 1 / cos(theta) * (cos(phi) * sin(theta) * om3 + sin(phi) * sin(theta) * om2 + cos(theta) * om1)
-    dtheta = 1 / cos(theta) * (- sin(phi) * cos(theta) * om3 + cos(phi) * cos(theta) * om2)
-    dpsi = 1 / cos(theta) * (sin(phi) * om2 + cos(phi) * om3)
+    # ~ dphi = 1 / cos(theta) * (cos(phi) * sin(theta) * om3 + sin(phi) * sin(theta) * om2 + cos(theta) * om1)
+    # ~ dtheta = 1 / cos(theta) * (- sin(phi) * cos(theta) * om3 + cos(phi) * cos(theta) * om2)
+    # ~ dpsi = 1 / cos(theta) * (sin(phi) * om2 + cos(phi) * om3)
+    dphi = (om1*sin(psi)+om2*cos(psi))/sin(theta)
+    dtheta = -(cos(theta)*sin(psi)*om1+cos(theta)*cos(psi)*om2-om3*sin(theta))/sin(theta)
+    dpsi = -sin(psi)*om2+cos(psi)*om1
     return dxdt, dydt, dzdt, dvxdt, dvydt, dvzdt, dphi, dtheta, dpsi, dom1, dom2, dom3
 
 
@@ -125,7 +128,7 @@ def compute(v0, angle, init_rotation):
     data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
 
     # initial conditions
-    x, y, z = 0, 0, 0  # m  -- positions
+    x, y, z = 0, 0, 1.2  # m  -- positions
     vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
     om1, om2, om3 = 0, 0, init_rotation
     phi, theta, psi = -np.pi / 2, angle * np.pi / 180, 0
@@ -144,7 +147,7 @@ def compute(v0, angle, init_rotation):
 # parameters
 v0 = 20  # initial velocity
 angl = 15  # angle of throw
-init_rotation = 250
+init_rotation = 50
 
 solution = compute(v0, angl, init_rotation)
 
