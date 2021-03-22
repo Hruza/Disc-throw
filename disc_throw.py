@@ -74,9 +74,11 @@ def get_model(omega, angle, velocity, points, data_F, data_M):
     U = np.linalg.norm(velocity)
     U=np.clip(U,0.1,30)
     angle=np.clip(angle*180/np.pi,-15,7.5)
-    omega=np.clip(omega,0,314)
+    omega=np.clip(-omega,0,314)
     F = np.array([griddata(points, f, [U, omega, angle], method='linear') for f in data_F])
     M = np.array([griddata(points, m, [U, omega, angle], method='linear') for m in data_M])
+
+    #todo: implement forehand throw(invert F_z and do something with M)
     return F, M
 
 
@@ -130,6 +132,8 @@ def compute(v0, angle, init_rotation):
     data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
     data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
 
+    plt.plot(CFD_data["al"],CFD_data["My"][2,2,:])
+    plt.show()
     # initial conditions
     x, y, z = 0, 0, 1.2  # m  -- positions
     vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
@@ -148,9 +152,9 @@ def compute(v0, angle, init_rotation):
 
 
 # parameters
-v0 = 10  # initial velocity
+v0 = 30  # initial velocity
 angl = 15  # angle of throw
-init_rotation = 10
+init_rotation = -30
 
 solution = compute(v0, angl, init_rotation)
 
