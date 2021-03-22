@@ -86,6 +86,8 @@ def model(t, nezVec, m, Ixy, Iz, points, data_F, data_M):
 
     # calculate forces and acceleration
     F, M = get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M)
+    F = F * 1.2
+    M = M * 1.2
     a = F / m
     # RHS of eq.
     # change of position
@@ -106,8 +108,9 @@ def model(t, nezVec, m, Ixy, Iz, points, data_F, data_M):
     # ~ dtheta = 1 / cos(theta) * (- sin(phi) * cos(theta) * om3 + cos(phi) * cos(theta) * om2)
     # ~ dpsi = 1 / cos(theta) * (sin(phi) * om2 + cos(phi) * om3)
     dphi = (om1*sin(psi)+om2*cos(psi))/sin(theta)
-    dtheta = -(cos(theta)*sin(psi)*om1+cos(theta)*cos(psi)*om2-om3*sin(theta))/sin(theta)
-    dpsi = -sin(psi)*om2+cos(psi)*om1
+    dtheta = -sin(psi)*om2+cos(psi)*om1
+    dpsi = -(cos(theta)*sin(psi)*om1+cos(theta)*cos(psi)*om2-om3*sin(theta))/sin(theta)
+
     return dxdt, dydt, dzdt, dvxdt, dvydt, dvzdt, dphi, dtheta, dpsi, dom1, dom2, dom3
 
 
@@ -140,14 +143,14 @@ def compute(v0, angle, init_rotation):
 
     odr_model = lambda t, nezVec: model(t, nezVec, m, Ixy, Iz, points, data_F, data_M)
 
-    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45', max_step=0.01)
+    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45',max_step=0.005)
     return solution
 
 
 # parameters
-v0 = 20  # initial velocity
+v0 = 10  # initial velocity
 angl = 15  # angle of throw
-init_rotation = 50
+init_rotation = 10
 
 solution = compute(v0, angl, init_rotation)
 
