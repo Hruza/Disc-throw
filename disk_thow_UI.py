@@ -58,17 +58,17 @@ class UI():
 
     def updateOMTraj(self):
         self.lsSols = os.listdir('./solutions/')
-        self.solOmTr[0].set(self.solName)
-        self.opTr[0]['menu'].delete(0, 'end')
-        for choice in self.lsSols:
-            self.opTr[0]['menu'].add_command(label=choice, command=tk._setit(self.solOmTr[0],choice))
+        for i in range(len(self.solOmTr)):
+            self.solOmTr[i].set(self.solName)
+            self.opTr[i]['menu'].delete(0, 'end')
+            for choice in self.lsSols:
+                self.opTr[i]['menu'].add_command(label=choice, command=tk._setit(self.solOmTr[i],choice))
 
     def on_opVel_change(self,*args):
         self.solName = self.solOm.get()
         self.updateVelGraph()
 
     def on_opTraj_change(self,*args):
-        self.solName = self.solOmTr[0].get()
         self.updateTrajGraph()
 
     def on_tab_change(self,event):
