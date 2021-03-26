@@ -15,7 +15,7 @@ class UI():
 
     def __init__(self,v0,angle0,om0):
         self.app_wind = Tk()
-        self.initv0   = v0
+        self.initv0 = v0
         self.initangle = angle0
         self.initom0 = om0
         self.solName = '%g_%g_%g.npy'%(float(self.initv0),float(self.initangle),float(self.initom0))
@@ -35,13 +35,17 @@ class UI():
         self.pltVelTB.update()
 
     def updateTrajGraph(self):
-        self.sol = np.load('./solutions/%s'%self.solName)
+        self.sols = []
+        for i in range(len(self.solOmTr)):
+            self.sols.append(np.load('./solutions/%s'%str(self.solOmTr[i].get())))
         self.pltTraj.clf()
         self.trajPltAx = self.pltTraj.add_subplot(111, projection='3d')
-        self.trajPltAx.plot(self.sol[0, :], self.sol[1, :],self.sol[2, :])
+        for i in range(len(self.sols)):
+            self.trajPltAx.plot(self.sols[i][0, :], self.sols[i][1, :],self.sols[i][2, :],label=self.solOmTr[i].get())
         self.trajPltAx.set_xlabel('x')
         self.trajPltAx.set_ylabel('y')
         self.trajPltAx.set_zlabel('z')
+        self.pltTraj.legend()
         self.pltTrajCan.draw()
         self.pltTrajTB.update()
 
@@ -52,12 +56,19 @@ class UI():
         for choice in self.lsSols:
             self.opVel['menu'].add_command(label=choice, command=tk._setit(self.solOm,choice))
 
+    def updateOMTraj(self):
+        self.lsSols = os.listdir('./solutions/')
+        self.solOmTr[0].set(self.solName)
+        self.opTr[0]['menu'].delete(0, 'end')
+        for choice in self.lsSols:
+            self.opTr[0]['menu'].add_command(label=choice, command=tk._setit(self.solOmTr[0],choice))
+
     def on_opVel_change(self,*args):
         self.solName = self.solOm.get()
         self.updateVelGraph()
 
     def on_opTraj_change(self,*args):
-        self.solName = self.solOmTr.get()
+        self.solName = self.solOmTr[0].get()
         self.updateTrajGraph()
 
     def on_tab_change(self,event):
@@ -65,9 +76,10 @@ class UI():
         if tab == 'Solver':
             pass
 
+        #update trajectory graph
         elif tab == 'Trajectory':
             self.updateTrajGraph()
-            self.updateOMVel()
+            self.updateOMTraj()
 
         # update velocity graph
         elif tab == 'Velocity':
@@ -83,6 +95,26 @@ class UI():
         self.sol = np.append(solution.y,solution.t.reshape(1,-1),axis=0)
         self.solName = '%g_%g_%g.npy'%(self.v0, self.angl, self.init_rotation)
         np.save('./solutions/%s'%self.solName,self.sol)
+
+    def updateTraj(self):
+        self.lsSols = os.listdir('./solutions/')
+        for i in range(len(self.solOmTr)):
+            Label(self.traj_fr,text='option menu: v0_theta_omega.npy').grid(row=i,column=0)
+            self.solOmTr[i].set(self.lsSols[0])
+            self.solOmTr[i].trace('w', self.on_opTraj_change)
+            self.opTr[i].grid(row=i, column=1)
+            # next trajectory
+        self.solver_bt.destroy()
+        self.solver_bt = Button(self.traj_fr, font=('Helvetica', 10),text='Add trajectory',command=self.addTraj)
+        self.solver_bt.grid(row=self.solver_bt_row, column=0)
+        self.pltTrajCan.get_tk_widget().grid(row=self.solver_bt_row+1, columnspan=2)
+
+    def addTraj(self):
+        self.solOmTr.append(StringVar(self.traj_fr))
+        self.opTr.append(OptionMenu(self.traj_fr, self.solOmTr[-1], *self.lsSols))
+        self.solver_bt_row += 1
+        self.updateTraj()
+
 
 
     def runUI(self):
@@ -131,15 +163,20 @@ class UI():
         Label(self.traj_fr,text='option menu: v0_theta_omega.npy').grid(row=0,column=0)
         # option list
         self.lsSols = os.listdir('./solutions/')
-        self.solOmTr = StringVar(self.traj_fr)
-        self.solOmTr.set(self.lsSols[0])
-        self.solOmTr.trace('w', self.on_opTraj_change)
-        self.opTr = OptionMenu(self.traj_fr, self.solOmTr,*self.lsSols)
-        self.opTr.grid(row=0, column=1)
+        self.solOmTr = [StringVar(self.traj_fr)]
+        self.solOmTr[0].set(self.lsSols[0])
+        self.solOmTr[0].trace('w', self.on_opTraj_change)
+        self.opTr = [OptionMenu(self.traj_fr, self.solOmTr[0],*self.lsSols)]
+        self.opTr[0].grid(row=0, column=1)
+        # next trajectory
+        self.solver_bt = Button(self.traj_fr,font=('Helvetica', 10), text='Add trajectory', command=self.addTraj)
+        self.solver_bt_row = 1
+        self.solver_bt.grid(row=self.solver_bt_row,column=0)
+
         # graph
         self.pltTraj = matplotlib.pyplot.figure(figsize=(7, 5), dpi=100)
         self.pltTrajCan = FigureCanvasTkAgg(self.pltTraj,master=self.traj_fr)
-        self.pltTrajCan.get_tk_widget().grid(row=1, columnspan=2)
+        self.pltTrajCan.get_tk_widget().grid(row=self.solver_bt_row+1, columnspan=2)
         self.pltTrajTB = NavigationToolbar2Tk(self.pltTrajCan, self.tab3)
         self.updateTrajGraph()
         self.traj_fr.pack()
