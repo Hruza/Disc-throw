@@ -2,7 +2,7 @@ from tkinter import *
 import tkinter as tk
 from tkinter import ttk
 import numpy as np
-from disc_throw_onlyfuncs import compute
+from disc_throw import compute
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_tkagg import (

@@ -151,28 +151,29 @@ def compute(v0, angle, init_rotation):
     return solution
 
 
-# parameters
-v0 = 30  # initial velocity
-angl = 15  # angle of throw
-init_rotation = -30
+if __name__ == "__main__":
+    # parameters
+    v0 = 30  # initial velocity
+    angl = 15  # angle of throw
+    init_rotation = -30
 
-solution = compute(v0, angl, init_rotation)
+    solution = compute(v0, angl, init_rotation)
 
-plt.plot(solution.t[:], solution.y[2, :])
-# plt.plot(solution.y[0, :], solution.y[1, :])
+    plt.plot(solution.t[:], solution.y[2, :])
+    # plt.plot(solution.y[0, :], solution.y[1, :])
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-plt.plot(solution.y[0, :], solution.y[1, :], solution.y[2, :])
-plt.show()
-plt.plot(solution.t, solution.y[3, :], solution.t, solution.y[4, :], solution.t, solution.y[5, :], solution.t,
-         np.sqrt(solution.y[3, :] ** 2 + solution.y[4, :] ** 2 + solution.y[5, :] ** 2))
-plt.legend(('vx', 'vy', 'vz', 'vmag'))
-plt.show()
-plt.plot(solution.t, solution.y[6, :], solution.t, solution.y[7, :], solution.t, solution.y[8, :])
-plt.legend(('phi', 'theta', 'psi'))
-plt.show()
-plt.plot(solution.t, solution.y[9, :], solution.t, solution.y[10, :], solution.t, solution.y[11, :], solution.t,
-         np.sqrt(solution.y[9, :] ** 2 + solution.y[10, :] ** 2 + solution.y[11, :] ** 2))
-plt.legend(('om1', 'om2', 'om3', 'ommag'))
-plt.show()
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    plt.plot(solution.y[0, :], solution.y[1, :], solution.y[2, :])
+    plt.show()
+    plt.plot(solution.t, solution.y[3, :], solution.t, solution.y[4, :], solution.t, solution.y[5, :], solution.t,
+             np.sqrt(solution.y[3, :] ** 2 + solution.y[4, :] ** 2 + solution.y[5, :] ** 2))
+    plt.legend(('vx', 'vy', 'vz', 'vmag'))
+    plt.show()
+    plt.plot(solution.t, solution.y[6, :], solution.t, solution.y[7, :], solution.t, solution.y[8, :])
+    plt.legend(('phi', 'theta', 'psi'))
+    plt.show()
+    plt.plot(solution.t, solution.y[9, :], solution.t, solution.y[10, :], solution.t, solution.y[11, :], solution.t,
+             np.sqrt(solution.y[9, :] ** 2 + solution.y[10, :] ** 2 + solution.y[11, :] ** 2))
+    plt.legend(('om1', 'om2', 'om3', 'ommag'))
+    plt.show()
