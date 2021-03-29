@@ -25,6 +25,14 @@ def rotate_vector(obj, direction):
     # assume we're using euler rotation
     obj.rotation_euler = rot_quat.to_euler()
     
+def add_vector(obj, direction, solution):
+    arrow.location = (solution[0, i], solution[1, i], solution[2, i])
+    rotate_vector(arrow,direction)
+    arrow.scale[2]=np.linalg.norm(direction)
+    arrow.keyframe_insert(data_path="location", index=-1)
+    arrow.keyframe_insert(data_path="rotation_euler", index=-1)
+    arrow.keyframe_insert(data_path="scale", index=-1)
+    
 
 solution = np.load("solutions/25_7_-30.npy")
 disc = bpy.data.objects["Jade"]
@@ -45,14 +53,10 @@ for i in range(len(solution[0])):
     rotate_euler(disc,solution[6,i],solution[7,i],solution[8,i])
     disc.keyframe_insert(data_path="location",index=-1)
     disc.keyframe_insert(data_path="rotation_euler",index=-1)
-
-    arrow.location = (solution[0, i], solution[1, i], solution[2, i])
-    rotate_vector(arrow,forces[i])
-    arrow.scale[2]=np.linalg.norm(forces[i])
-    arrow.keyframe_insert(data_path="location", index=-1)
-    arrow.keyframe_insert(data_path="rotation_euler", index=-1)
-    arrow.keyframe_insert(data_path="scale", index=-1)
+    
+    add_vector(arrow,forces[i],solution)
     
     #add moment viasualisation 
+    
     
     frame_number+=1

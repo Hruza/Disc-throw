@@ -40,7 +40,7 @@ def angle_between(v1, v2):
 
 
 # translate ODE parameters to CFD parameters
-def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M):
+def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M, debug=False):
     omega = om3
     dir = np.array([vx, vy, vz])
 
@@ -66,7 +66,10 @@ def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M):
     corotZ = rotation.apply(np.array([0, 0, 1]))
 
     M = np.array([np.dot(corotX, M), np.dot(corotY, M), np.dot(corotZ, M)])
-    return 1.2*F, 1.2*M
+    if debug:
+        return 1.2 * F, 1.2 * M, dir, localX, localX, localZ, corotX, corotY, corotZ, angle
+    else:
+        return 1.2 * F, 1.2 * M
 
 
 # takes values from CFD model
@@ -122,7 +125,7 @@ def load_data():  # load data
     points = np.array([[U, omg, al] for U in CFD_data["U"] for omg in CFD_data["omg"] for al in CFD_data["al"]])
     data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
     data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
-    return points,data_F,data_M
+    return points, data_F, data_M
 
 
 def compute(v0, angle, init_rotation):
@@ -132,7 +135,7 @@ def compute(v0, angle, init_rotation):
     Ixy = inertia[0, 0]
     Iz = inertia[2, 2]
 
-    points,data_F,data_M=load_data()
+    points, data_F, data_M = load_data()
 
     # initial conditions
     x, y, z = 0, 0, 1.2  # m  -- positions
