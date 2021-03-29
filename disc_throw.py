@@ -66,19 +66,19 @@ def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M):
     corotZ = rotation.apply(np.array([0, 0, 1]))
 
     M = np.array([np.dot(corotX, M), np.dot(corotY, M), np.dot(corotZ, M)])
-    return F, M
+    return 1.2*F, 1.2*M
 
 
 # takes values from CFD model
 def get_model(omega, angle, velocity, points, data_F, data_M):
     U = np.linalg.norm(velocity)
-    U=np.clip(U,0.1,30)
-    angle=np.clip(angle*180/np.pi,-15,7.5)
-    omega=np.clip(-omega,0,314)
+    U = np.clip(U, 0.1, 30)
+    angle = np.clip(angle * 180 / np.pi, -15, 7.5)
+    omega = np.clip(-omega, 0, 314)
     F = np.array([griddata(points, f, [U, omega, angle], method='linear') for f in data_F])
     M = np.array([griddata(points, m, [U, omega, angle], method='linear') for m in data_M])
 
-    #todo: implement forehand throw(invert F_z and do something with M)
+    # todo: implement forehand throw(invert F_z and do something with M)
     return F, M
 
 
@@ -88,8 +88,6 @@ def model(t, nezVec, m, Ixy, Iz, points, data_F, data_M):
 
     # calculate forces and acceleration
     F, M = get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M)
-    F = F * 1.2
-    M = M * 1.2
     a = F / m
     # RHS of eq.
     # change of position
@@ -109,11 +107,22 @@ def model(t, nezVec, m, Ixy, Iz, points, data_F, data_M):
     # ~ dphi = 1 / cos(theta) * (cos(phi) * sin(theta) * om3 + sin(phi) * sin(theta) * om2 + cos(theta) * om1)
     # ~ dtheta = 1 / cos(theta) * (- sin(phi) * cos(theta) * om3 + cos(phi) * cos(theta) * om2)
     # ~ dpsi = 1 / cos(theta) * (sin(phi) * om2 + cos(phi) * om3)
-    dphi = (om1*sin(psi)+om2*cos(psi))/sin(theta)
-    dtheta = -sin(psi)*om2+cos(psi)*om1
-    dpsi = -(cos(theta)*sin(psi)*om1+cos(theta)*cos(psi)*om2-om3*sin(theta))/sin(theta)
+    dphi = (om1 * sin(psi) + om2 * cos(psi)) / sin(theta)
+    dtheta = -sin(psi) * om2 + cos(psi) * om1
+    dpsi = -(cos(theta) * sin(psi) * om1 + cos(theta) * cos(psi) * om2 - om3 * sin(theta)) / sin(theta)
 
     return dxdt, dydt, dzdt, dvxdt, dvydt, dvzdt, dphi, dtheta, dpsi, dom1, dom2, dom3
+
+
+def load_data():  # load data
+    CFD_data = dict()
+    for file in listdir("forcesDir"):
+        CFD_data[file.split('.')[0]] = np.load("forcesDir/" + file)
+
+    points = np.array([[U, omg, al] for U in CFD_data["U"] for omg in CFD_data["omg"] for al in CFD_data["al"]])
+    data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
+    data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
+    return points,data_F,data_M
 
 
 def compute(v0, angle, init_rotation):
@@ -123,20 +132,11 @@ def compute(v0, angle, init_rotation):
     Ixy = inertia[0, 0]
     Iz = inertia[2, 2]
 
-    # load data
-    CFD_data = dict()
-    for file in listdir("forcesDir"):
-        CFD_data[file.split('.')[0]] = np.load("forcesDir/" + file)
+    points,data_F,data_M=load_data()
 
-    points = np.array([[U, omg, al] for U in CFD_data["U"] for omg in CFD_data["omg"] for al in CFD_data["al"]])
-    data_F = [CFD_data["Fx"].flatten(), CFD_data["Fy"].flatten(), CFD_data["Fz"].flatten()]
-    data_M = [CFD_data["Mx"].flatten(), CFD_data["My"].flatten(), CFD_data["Mz"].flatten()]
-
-    plt.plot(CFD_data["al"],CFD_data["My"][2,2,:])
-    plt.show()
     # initial conditions
     x, y, z = 0, 0, 1.2  # m  -- positions
-    vx, vy, vz = v0 * np.cos(angl * np.pi / 180), 0, v0 * np.sin(angl * np.pi / 180)  # ms -- velocities
+    vx, vy, vz = v0 * np.cos(angle * np.pi / 180), 0, v0 * np.sin(angle * np.pi / 180)  # ms -- velocities
     om1, om2, om3 = 0, 0, init_rotation
     phi, theta, psi = -np.pi / 2, angle * np.pi / 180, 0
     init_cond = x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3
@@ -147,17 +147,17 @@ def compute(v0, angle, init_rotation):
 
     odr_model = lambda t, nezVec: model(t, nezVec, m, Ixy, Iz, points, data_F, data_M)
 
-    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45',max_step=0.005)
+    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45', max_step=0.005)
     return solution
 
 
 if __name__ == "__main__":
     # parameters
     v0 = 30  # initial velocity
-    angl = 15  # angle of throw
+    angle = 15  # angle of throw
     init_rotation = -30
 
-    solution = compute(v0, angl, init_rotation)
+    solution = compute(v0, angle, init_rotation)
 
     plt.plot(solution.t[:], solution.y[2, :])
     # plt.plot(solution.y[0, :], solution.y[1, :])
