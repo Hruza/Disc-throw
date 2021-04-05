@@ -108,7 +108,7 @@ class UI():
         self.v0 = float(self.v0En.get())
         self.angl = float(self.angleEn.get())
         self.init_rotation = float(self.init_rotEn.get())
-        solution = compute(self.v0, self.angl, self.init_rotation)
+        solution = compute(self.v0, self.angl, 0, self.init_rotation)
         self.sol = np.append(solution.y,solution.t.reshape(1,-1),axis=0)
         self.solName = '%g_%g_%g.npy'%(self.v0, self.angl, self.init_rotation)
         np.save('./solutions/%s'%self.solName,self.sol)

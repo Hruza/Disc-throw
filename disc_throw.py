@@ -40,10 +40,11 @@ def angle_between(v1, v2):
     v2_u = normalize(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
+
 def normalize(v):
     norm = np.linalg.norm(v)
     if norm == 0:
-       return v
+        return v
     return v / norm
 
 
@@ -153,7 +154,9 @@ def load_data():  # load data
     return points, data_F, data_M
 
 
-def compute(v0, angle, init_rotation):
+def compute(v0, height_angle, hyzer_angle, init_rotation):
+    # hyzer_angle: positive -> hyzer, negative -> anhyzer
+
     # getting information from stl file
     disc = mesh.Mesh.from_file('jade.stl')
     volume, m, cog, inertia = disc.get_mass_properties_with_density(1250)
@@ -162,11 +165,24 @@ def compute(v0, angle, init_rotation):
 
     points, data_F, data_M = load_data()
 
+    # calculatie initial rotation
+    alpha = height_angle * np.pi / 180
+    beta = hyzer_angle * np.pi / 180
+    dir_phi = np.array([cos(beta) * sin(alpha), -cos(alpha) * sin(beta), 0])
+
+    def f(a, b): return (cos(a) * (sin(b) ** 2)) / cos(b)
+
+    dir_theta = np.array([cos(beta) * sin(alpha), -cos(alpha) * sin(beta), f(beta, alpha) + f(alpha, beta)])
+
+    phi = -angle_between(dir_phi, np.array([0, 1, 0]))
+    theta = angle_between(dir_theta, np.array([0, 0, 1]))
+    psi = 0
+
     # initial conditions
     x, y, z = 0, 0, 1.2  # m  -- positions
-    vx, vy, vz = v0 * np.cos(angle * np.pi / 180), 0, v0 * np.sin(angle * np.pi / 180)  # ms -- velocities
+    vx, vy, vz = v0 * np.cos(height_angle * np.pi / 180), 0, v0 * np.sin(height_angle * np.pi / 180)  # ms -- velocities
     om1, om2, om3 = 0, 0, init_rotation
-    phi, theta, psi = -np.pi / 2, angle * np.pi / 180, 0
+    # phi, theta, psi = -np.pi / 2, angle * np.pi / 180, 0
     init_cond = x, y, z, vx, vy, vz, phi, theta, psi, om1, om2, om3
 
     t = np.array([0, 10])  # s -- time
@@ -181,11 +197,12 @@ def compute(v0, angle, init_rotation):
 
 if __name__ == "__main__":
     # parameters
-    v0 = 30  # initial velocity
-    angle = 1  # angle of throw
-    init_rotation = -30
+    v0 = 22  # initial velocity
+    height_angle = 1  # angle of throw
+    hyzer_angle = 5
+    init_rotation = -100
 
-    solution = compute(v0, angle, init_rotation)
+    solution = compute(v0, height_angle, hyzer_angle, init_rotation)
 
     plt.plot(solution.t[:], solution.y[2, :])
     # plt.plot(solution.y[0, :], solution.y[1, :])
