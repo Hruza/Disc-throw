@@ -6,8 +6,13 @@ import os
 import mathutils
 import math
 
-sys.path.append("C:/Users/hruza/Documents/Programování/Disc throw")
-os.chdir("C:/Users/hruza/Documents/Programování/Disc throw")
+#honza
+#sys.path.append("C:/Users/hruza/Documents/Programování/Disc throw")
+#os.chdir("C:/Users/hruza/Documents/Programování/Disc throw")
+
+#tomas
+sys.path.append("E:/00_Documents/07_coding/02_gits/Disc-throw")
+os.chdir("E:/00_Documents/07_coding/02_gits/Disc-throw")
 
 import disc_throw
 
