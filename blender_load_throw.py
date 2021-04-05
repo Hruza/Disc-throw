@@ -26,24 +26,24 @@ def rotate_vector(obj, direction):
     obj.rotation_euler = rot_quat.to_euler()
     
 def add_vector(obj, direction, solution):
-    arrow.location = (solution[0, i], solution[1, i], solution[2, i])
-    rotate_vector(arrow,direction)
-    arrow.scale[2]=np.linalg.norm(direction)
-    arrow.keyframe_insert(data_path="location", index=-1)
-    arrow.keyframe_insert(data_path="rotation_euler", index=-1)
-    arrow.keyframe_insert(data_path="scale", index=-1)
+    obj.location = (solution[0, i], solution[1, i], solution[2, i])
+    rotate_vector(obj,direction)
+    obj.scale[2]=np.linalg.norm(direction)
+    obj.keyframe_insert(data_path="location", index=-1)
+    obj.keyframe_insert(data_path="rotation_euler", index=-1)
+    obj.keyframe_insert(data_path="scale", index=-1)
     
 
-solution = np.load("solutions/25_7_-30.npy")
+solution = np.load("solutions/30_1_-30.npy")
 disc = bpy.data.objects["Jade"]
-arrow = bpy.data.objects["Arrow"]
-arrow2 = bpy.data.objects["Arrow2"]
+arrow = [bpy.data.objects["Arrow"+str(i)] for i in range(6) ]
 
 points, data_F, data_M = disc_throw.load_data()
 
-forces = np.array([disc_throw.get_forces(solution[3,i],solution[4,i],solution[5,i],solution[6,i],solution[7,i],solution[8,i],solution[11,i],points,data_F,data_M)[0] for i in range(len(solution[0,:])) ])
-moments=np.array([disc_throw.get_forces(solution[3,i],solution[4,i],solution[5,i],solution[6,i],solution[7,i],solution[8,i],solution[11,i],points,data_F,data_M)[1] for i in range(len(solution[0,:])) ])
+data = np.array([disc_throw.get_forces(solution[3,i],solution[4,i],solution[5,i],solution[6,i],solution[7,i],solution[8,i],solution[11,i],points,data_F,data_M,debug=True) for i in range(len(solution[0,:])) ])
 
+corot_to_global=np.array([np.transpose( np.array([data[j,i] for i in [6,7,8]]) ) for j in range(len(solution[0])) ])
+local_to_global=np.array([np.transpose( np.array([data[j,i] for i in [3,4,5]]) ) for j in range(len(solution[0])) ])
 
 frame_number=0
 # apply solution to jadefor i in range(50):
@@ -54,9 +54,12 @@ for i in range(len(solution[0])):
     disc.keyframe_insert(data_path="location",index=-1)
     disc.keyframe_insert(data_path="rotation_euler",index=-1)
     
-    add_vector(arrow,forces[i],solution)
+    add_vector(arrow[0],data[i,0],solution)
+    add_vector(arrow[1],100*np.matmul(corot_to_global[i],data[i,1]),solution)
     
-    #add moment viasualisation 
+    add_vector(arrow[2],data[i,3],solution)
+    add_vector(arrow[3],data[i,4],solution)
+    add_vector(arrow[4],data[i,5],solution)
     
-    
+    add_vector(arrow[5],np.array([0,0,-9.81]),solution)
     frame_number+=1

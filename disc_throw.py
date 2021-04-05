@@ -9,6 +9,8 @@ from scipy.spatial.transform import Rotation as rot
 
 g = 9.81
 
+CALCULATE_ROTATIONS = True
+
 
 # generates rotated meshes
 def generate_angles(mesh):
@@ -44,10 +46,19 @@ def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M, debug=F
     omega = om3
     dir = np.array([vx, vy, vz])
 
-    rotation_phi = rot.from_rotvec(np.array([0, 0, 1]) * phi)
-    rotation_theta = rot.from_rotvec(rotation_phi.apply([1, 0, 0]) * theta)
+    if phi == 0:
+        rotation_phi = rot.identity()
+    else:
+        rotation_phi = rot.from_rotvec(np.array([0, 0, 1]) * phi)
+    if theta == 0:
+        rotation_theta = rot.identity()
+    else:
+        rotation_theta = rot.from_rotvec(rotation_phi.apply([1, 0, 0]) * theta)
     normal = rotation_theta.apply(np.array([0, 0, 1]))
-    rotation_psi = rot.from_rotvec(normal * psi)
+    if psi == 0:
+        rotation_psi = rot.identity()
+    else:
+        rotation_psi = rot.from_rotvec(normal * psi)
 
     angle = angle_between(dir, normal) - (np.pi / 2)
     F, M = get_model(omega, angle, dir, points, data_F, data_M)
@@ -57,17 +68,25 @@ def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M, debug=F
     localZ = np.cross(localX, localY)
 
     F = -(F[0] * localX) - (F[1] * localY) + (F[2] * localZ)
-    M = -(M[0] * localX) - (M[1] * localY) + (M[2] * localZ)
 
-    rotation = rotation_psi * rotation_theta * rotation_phi
+    if CALCULATE_ROTATIONS:
+        M = -(M[0] * localX) - (M[1] * localY) + (M[2] * localZ)
 
-    corotX = rotation.apply(np.array([1, 0, 0]))
-    corotY = rotation.apply(np.array([0, 1, 0]))
-    corotZ = rotation.apply(np.array([0, 0, 1]))
+        rotation = rotation_psi * rotation_theta * rotation_phi
 
-    M = np.array([np.dot(corotX, M), np.dot(corotY, M), np.dot(corotZ, M)])
+        corotX = rotation.apply(np.array([1, 0, 0]))
+        corotY = rotation.apply(np.array([0, 1, 0]))
+        corotZ = rotation.apply(np.array([0, 0, 1]))
+
+        M = np.array([np.dot(corotX, M), np.dot(corotY, M), np.dot(corotZ, M)])
+    else:
+        M = np.array([0, 0, 0])
+        if debug:
+            corotX = np.array([0, 0, 0])
+            corotY = np.array([0, 0, 0])
+            corotZ = np.array([0, 0, 0])
     if debug:
-        return 1.2 * F, 1.2 * M, dir, localX, localX, localZ, corotX, corotY, corotZ, angle
+        return 1.2 * F, 1.2 * M, dir, localX, localY, localZ, corotX, corotY, corotZ, angle
     else:
         return 1.2 * F, 1.2 * M
 
@@ -150,14 +169,14 @@ def compute(v0, angle, init_rotation):
 
     odr_model = lambda t, nezVec: model(t, nezVec, m, Ixy, Iz, points, data_F, data_M)
 
-    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45', max_step=0.005)
+    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45')
     return solution
 
 
 if __name__ == "__main__":
     # parameters
     v0 = 30  # initial velocity
-    angle = 15  # angle of throw
+    angle = 1  # angle of throw
     init_rotation = -30
 
     solution = compute(v0, angle, init_rotation)
@@ -179,4 +198,12 @@ if __name__ == "__main__":
     plt.plot(solution.t, solution.y[9, :], solution.t, solution.y[10, :], solution.t, solution.y[11, :], solution.t,
              np.sqrt(solution.y[9, :] ** 2 + solution.y[10, :] ** 2 + solution.y[11, :] ** 2))
     plt.legend(('om1', 'om2', 'om3', 'ommag'))
+    plt.show()
+
+    points, data_F, data_M = load_data()
+    data = np.array([get_forces(solution.y[3, i], solution.y[4, i], solution.y[5, i], solution.y[6, i],
+                                solution.y[7, i], solution.y[8, i], solution.y[11, i], points, data_F, data_M,
+                                debug=True) for i in range(len(solution.y[0, :]))])
+
+    plt.plot(solution.t, data[:, 9])
     plt.show()
