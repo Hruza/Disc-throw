@@ -34,7 +34,7 @@ def add_vector(obj, direction, solution):
     obj.keyframe_insert(data_path="scale", index=-1)
     
 
-solution = np.load("solutions/30_1_-30.npy")
+solution = np.load("solutions/18_20_-100.npy")
 disc = bpy.data.objects["Jade"]
 arrow = [bpy.data.objects["Arrow"+str(i)] for i in range(6) ]
 
@@ -55,7 +55,7 @@ for i in range(len(solution[0])):
     disc.keyframe_insert(data_path="rotation_euler",index=-1)
     
     add_vector(arrow[0],data[i,0],solution)
-    add_vector(arrow[1],100*np.matmul(corot_to_global[i],data[i,1]),solution)
+    add_vector(arrow[1],10*np.matmul(corot_to_global[i],data[i,1]),solution)
     
     add_vector(arrow[2],data[i,3],solution)
     add_vector(arrow[3],data[i,4],solution)

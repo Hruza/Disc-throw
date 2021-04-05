@@ -36,9 +36,15 @@ def fallEarth(t, nezVec):
 
 # returns angle between two vectors
 def angle_between(v1, v2):
-    v1_u = v1 / np.linalg.norm(v1)
-    v2_u = v2 / np.linalg.norm(v2)
+    v1_u = normalize(v1)
+    v2_u = normalize(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+def normalize(v):
+    norm = np.linalg.norm(v)
+    if norm == 0:
+       return v
+    return v / norm
 
 
 # translate ODE parameters to CFD parameters
@@ -64,8 +70,8 @@ def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M, debug=F
     F, M = get_model(omega, angle, dir, points, data_F, data_M)
 
     localX = (dir / np.linalg.norm(dir))
-    localY = np.cross(normal, localX)
-    localZ = np.cross(localX, localY)
+    localY = normalize(np.cross(normal, localX))
+    localZ = normalize(np.cross(localX, localY))
 
     F = -(F[0] * localX) - (F[1] * localY) + (F[2] * localZ)
 
