@@ -8,6 +8,7 @@ import matplotlib
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 import os
+import matplotlib.gridspec as gridspec
 
 class UI():
     def __init__(self):
@@ -24,13 +25,29 @@ class UI():
     def updateVelGraph(self):
         self.sol = np.load('./solutions/%s'%self.solName)
         self.pltVel.clf()
-        self.velPltAx = self.pltVel.add_subplot(111)
+        # self.pltVel = plt.figure(constrained_layout=True)
+        self.spec2 = gridspec.GridSpec(ncols=2, nrows=2, figure=self.pltVel)
+        self.velPltAx = self.pltVel.add_subplot(self.spec2[0, 0])
         self.velPltAx.plot(self.sol[-1, :], self.sol[3, :], label='v_x')
         self.velPltAx.plot(self.sol[-1, :], self.sol[4, :], label='v_y')
         self.velPltAx.plot(self.sol[-1, :], self.sol[5, :], label='v_z')
         self.velPltAx.set_xlabel('t')
         self.velPltAx.set_ylabel('v_i')
-        self.pltVel.legend()
+        self.velPltAx.legend()
+        self.velPltAx = self.pltVel.add_subplot(self.spec2[0, 1])
+        self.velPltAx.plot(self.sol[-1, :], self.sol[6, :], label='phi')
+        self.velPltAx.plot(self.sol[-1, :], self.sol[7, :], label='theta')
+        self.velPltAx.plot(self.sol[-1, :], self.sol[8, :], label='psi')
+        self.velPltAx.set_xlabel('t')
+        self.velPltAx.set_ylabel('phi, theta, psi')
+        self.velPltAx.legend()
+        self.velPltAx = self.pltVel.add_subplot(self.spec2[1, 0])
+        self.velPltAx.plot(self.sol[-1, :], self.sol[9, :], label='om1')
+        self.velPltAx.plot(self.sol[-1, :], self.sol[10, :], label='om2')
+        self.velPltAx.plot(self.sol[-1, :], self.sol[11, :], label='om3')
+        self.velPltAx.set_xlabel('t')
+        self.velPltAx.set_ylabel('om_i')
+        self.velPltAx.legend()
         self.pltVelCan.draw()
         self.pltVelTB.update()
 
@@ -192,7 +209,7 @@ class UI():
         self.opVel = OptionMenu(self.solution_fr, self.solOm , *self.lsSols)
         self.opVel.grid(row=0,column=1)
         # graph
-        self.pltVel = matplotlib.pyplot.figure(figsize=(7, 5), dpi=100)
+        self.pltVel = plt.figure(figsize=(10,8), dpi=100,constrained_layout=True)
         self.pltVelCan = FigureCanvasTkAgg(self.pltVel,master=self.solution_fr)
         self.pltVelCan.get_tk_widget().grid(row=1,columnspan=2)
         self.pltVelTB = NavigationToolbar2Tk(self.pltVelCan, self.tab2)
