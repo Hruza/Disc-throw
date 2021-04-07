@@ -14,6 +14,7 @@ import math
 sys.path.append("E:/00_Documents/07_coding/02_gits/Disc-throw")
 os.chdir("E:/00_Documents/07_coding/02_gits/Disc-throw")
 
+
 import disc_throw
 
 def rotate_euler(obj, fi,theta, psi):
@@ -39,7 +40,7 @@ def add_vector(obj, direction, solution):
     obj.keyframe_insert(data_path="scale", index=-1)
     
 
-solution = np.load("solutions/18_20_-100.npy")
+solution = np.load("solutions/25_3_-250_87.npy")
 disc = bpy.data.objects["Jade"]
 arrow = [bpy.data.objects["Arrow"+str(i)] for i in range(6) ]
 
@@ -49,6 +50,8 @@ data = np.array([disc_throw.get_forces(solution[3,i],solution[4,i],solution[5,i]
 
 corot_to_global=np.array([np.transpose( np.array([data[j,i] for i in [6,7,8]]) ) for j in range(len(solution[0])) ])
 local_to_global=np.array([np.transpose( np.array([data[j,i] for i in [3,4,5]]) ) for j in range(len(solution[0])) ])
+
+for a in bpy.data.actions: a.user_clear()  
 
 frame_number=0
 # apply solution to jadefor i in range(50):

@@ -102,7 +102,7 @@ def get_forces(vx, vy, vz, phi, theta, psi, om3, points, data_F, data_M, debug=F
 def get_model(omega, angle, velocity, points, data_F, data_M):
     U = np.linalg.norm(velocity)
     U = np.clip(U, 0.1, 30)
-    angle = np.clip(angle * 180 / np.pi, -15, 7.5)
+    angle = np.clip(angle * 180 / np.pi, -90, 90)
     omega = np.clip(-omega, 0, 314)
     F = np.array([griddata(points, f, [U, omega, angle], method='linear') for f in data_F])
     M = np.array([griddata(points, m, [U, omega, angle], method='linear') for m in data_M])

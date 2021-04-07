@@ -203,7 +203,7 @@ class UI():
         self.solver_bt.grid(row=self.solver_bt_row,column=0)
 
         # graph
-        self.pltTraj = matplotlib.pyplot.figure(figsize=(7, 4), dpi=100)
+        self.pltTraj = matplotlib.pyplot.figure(figsize=(10,7), dpi=100)
         self.pltTrajCan = FigureCanvasTkAgg(self.pltTraj,master=self.traj_fr)
         self.pltTrajCan.get_tk_widget().grid(row=self.solver_bt_row+1, columnspan=2)
         self.pltTrajTB = NavigationToolbar2Tk(self.pltTrajCan, self.tab3)
@@ -221,7 +221,7 @@ class UI():
         self.opVel = OptionMenu(self.solution_fr, self.solOm , *self.lsSols)
         self.opVel.grid(row=0,column=1)
         # graph
-        self.pltVel = plt.figure(figsize=(10,8), dpi=100,constrained_layout=True)
+        self.pltVel = plt.figure(figsize=(10,7), dpi=100,constrained_layout=True)
         self.pltVelCan = FigureCanvasTkAgg(self.pltVel,master=self.solution_fr)
         self.pltVelCan.get_tk_widget().grid(row=1,columnspan=2)
         self.pltVelTB = NavigationToolbar2Tk(self.pltVelCan, self.tab2)
@@ -233,7 +233,7 @@ class UI():
         self.app_wind.mainloop()
 
 
-UI_ = UI(10,20,-30,0)
+UI_ = UI(25,3,-250,0)
 UI_.runUI()
 
 
