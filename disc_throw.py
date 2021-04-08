@@ -154,6 +154,22 @@ def load_data():  # load data
     return points, data_F, data_M
 
 
+def euler_from_init(height_angle, hyzer_angle):
+    # calculatie initial rotation
+    alpha = height_angle * np.pi / 180
+    beta = hyzer_angle * np.pi / 180
+    dir_phi = np.array([cos(beta) * sin(alpha), -cos(alpha) * sin(beta), 0])
+
+    def f(a, b): return (cos(a) * (sin(b)**2)) / cos(b)
+
+    dir_theta = np.array([cos(beta) * sin(alpha), -cos(alpha) * sin(beta), f(beta, alpha) + f(alpha, beta)])
+
+    phi = -angle_between(dir_phi, np.array([0, 1, 0]))
+    theta = (np.pi/2) - angle_between(dir_theta, np.array([0, 0, 1]))
+    psi = 0
+    return phi, theta, psi
+
+
 def compute(v0, height_angle, hyzer_angle, init_rotation):
     # hyzer_angle: positive -> hyzer, negative -> anhyzer
 
@@ -165,18 +181,7 @@ def compute(v0, height_angle, hyzer_angle, init_rotation):
 
     points, data_F, data_M = load_data()
 
-    # calculatie initial rotation
-    alpha = height_angle * np.pi / 180
-    beta = hyzer_angle * np.pi / 180
-    dir_phi = np.array([cos(beta) * sin(alpha), -cos(alpha) * sin(beta), 0])
-
-    def f(a, b): return (cos(a) * (sin(b) ** 2)) / cos(b)
-
-    dir_theta = np.array([cos(beta) * sin(alpha), -cos(alpha) * sin(beta), f(beta, alpha) + f(alpha, beta)])
-
-    phi = -angle_between(dir_phi, np.array([0, 1, 0]))
-    theta = angle_between(dir_theta, np.array([0, 0, 1]))
-    psi = 0
+    phi, theta, psi = euler_from_init(height_angle, hyzer_angle)
 
     # initial conditions
     x, y, z = 0, 0, 1.2  # m  -- positions
@@ -198,8 +203,8 @@ def compute(v0, height_angle, hyzer_angle, init_rotation):
 if __name__ == "__main__":
     # parameters
     v0 = 22  # initial velocity
-    height_angle = 1  # angle of throw
-    hyzer_angle = 5
+    height_angle = 45  # angle of throw
+    hyzer_angle = 20
     init_rotation = -100
 
     solution = compute(v0, height_angle, hyzer_angle, init_rotation)

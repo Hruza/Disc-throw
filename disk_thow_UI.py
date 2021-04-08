@@ -169,7 +169,7 @@ class UI():
         Label(self.solver_fr, text='starting velocity').grid(row=3,column=0)
         Label(self.solver_fr, text='angle of the throw').grid(row=4,column=0)
         Label(self.solver_fr, text='init rotation').grid(row=5,column=0)
-        Label(self.solver_fr, text='hazer angle').grid(row=6,column=0)
+        Label(self.solver_fr, text='hyzer angle').grid(row=6,column=0)
         self.solver_bt = Button(master=self.solver_fr, width=20,font=('Helvetica', 15), text='Solve',bg='grey', command=self.solverBtClick)
         self.solver_bt.grid(row=8, column=0,columnspan=2)
         # column 1
