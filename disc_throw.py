@@ -196,16 +196,16 @@ def compute(v0, height_angle, hyzer_angle, init_rotation):
 
     odr_model = lambda t, nezVec: model(t, nezVec, m, Ixy, Iz, points, data_F, data_M)
 
-    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='RK45')
+    solution = solve_ivp(odr_model, t, init_cond, events=fallEarth, method='BDf',max_step=1e-4)
     return solution
 
 
 if __name__ == "__main__":
     # parameters
-    v0 = 22  # initial velocity
-    height_angle = 45  # angle of throw
-    hyzer_angle = 20
-    init_rotation = -100
+    v0 = 20  # initial velocity
+    height_angle = 3  # angle of throw
+    hyzer_angle = 0
+    init_rotation = -30
 
     solution = compute(v0, height_angle, hyzer_angle, init_rotation)
 
@@ -214,24 +214,6 @@ if __name__ == "__main__":
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    plt.plot(solution.y[0, :], solution.y[1, :], solution.y[2, :])
-    plt.show()
-    plt.plot(solution.t, solution.y[3, :], solution.t, solution.y[4, :], solution.t, solution.y[5, :], solution.t,
-             np.sqrt(solution.y[3, :] ** 2 + solution.y[4, :] ** 2 + solution.y[5, :] ** 2))
-    plt.legend(('vx', 'vy', 'vz', 'vmag'))
-    plt.show()
-    plt.plot(solution.t, solution.y[6, :], solution.t, solution.y[7, :], solution.t, solution.y[8, :])
-    plt.legend(('phi', 'theta', 'psi'))
-    plt.show()
-    plt.plot(solution.t, solution.y[9, :], solution.t, solution.y[10, :], solution.t, solution.y[11, :], solution.t,
-             np.sqrt(solution.y[9, :] ** 2 + solution.y[10, :] ** 2 + solution.y[11, :] ** 2))
-    plt.legend(('om1', 'om2', 'om3', 'ommag'))
-    plt.show()
-
-    points, data_F, data_M = load_data()
-    data = np.array([get_forces(solution.y[3, i], solution.y[4, i], solution.y[5, i], solution.y[6, i],
-                                solution.y[7, i], solution.y[8, i], solution.y[11, i], points, data_F, data_M,
-                                debug=True) for i in range(len(solution.y[0, :]))])
-
-    plt.plot(solution.t, data[:, 9])
-    plt.show()
+    sol = np.append(solution.y,solution.t.reshape(1,-1),axis=0)
+    solName = '%g_%g_%g_%g.npy'%(v0, height_angle, hyzer_angle,  init_rotation)
+    np.save('./solutions/%s'%solName,sol)
